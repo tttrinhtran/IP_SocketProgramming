@@ -1,0 +1,7 @@
+3
+Hello
+Hello from the other side
+Python
+A programing language
+Candy
+A sweet treat
