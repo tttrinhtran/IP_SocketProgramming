@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine.UI;
 using System.IO;
+using Unity.Burst.CompilerServices;
 
 public class ServerController : MonoBehaviour
 {
@@ -137,6 +138,28 @@ public class ServerController : MonoBehaviour
         }
     }
 }
+public enum Type{
+    Hello,
+    Start,
+    Lobby, 
+    Play,
+    End
+}
+[Serializable]
+public class Message
+{
+    public string userID; 
+    public int point; 
+    public string hint;
+    public Type type;
+    public Data data; 
+} 
+
+[Serializable]
+public class Data{
+    public string hint; 
+    public string currentAnswer; 
+}
 
 public class ClientHandler
 {
@@ -144,8 +167,6 @@ public class ClientHandler
     private ServerController serverController;
     private NetworkStream stream;
     private bool isRunning = true;
-
-
 
 
     public ClientHandler(TcpClient client, ServerController serverController)
@@ -160,11 +181,21 @@ public class ClientHandler
         {
             // Get client stream
             stream = client.GetStream();
+            
 
-            // Send a "hello" message to the client
-            SendMessage("Hello from the server!");
+            Message messageToSend = new Message();
+            messageToSend.userID = "user123";
+            messageToSend.point = 100;
+            messageToSend.hint = "Some hint";
+            messageToSend.type = Type.Lobby;
+            messageToSend.data = new Data();
+            messageToSend.data.hint = "Data hint";
+            messageToSend.data.currentAnswer = "Answer";
 
-            // Handle client messages
+            // Send the JSON object to the client
+            SendJSON(messageToSend);
+
+            
             while (isRunning)
             {
                 byte[] buffer = new byte[1024];
@@ -231,6 +262,28 @@ public class ClientHandler
         catch (Exception ex)
         {
             Debug.LogError("Error closing client connection: " + ex.Message);
+        }
+    }
+
+    public void SendJSON(Message data){
+        try
+        {
+            // Serialize the JSON object to a string using JsonUtility
+            string json = JsonUtility.ToJson(data);
+        
+            Debug.Log("JSON object: " + json);
+
+            // Convert the JSON string to bytes
+            byte[] buffer = System.Text.Encoding.ASCII.GetBytes(json);
+
+            // Write the bytes to the network stream
+            stream.Write(buffer, 0, buffer.Length);
+
+            Debug.Log("JSON object sent to client: " + json);
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError("Error sending JSON object: " + ex.Message);
         }
     }
 
