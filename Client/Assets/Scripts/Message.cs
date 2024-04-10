@@ -5,23 +5,38 @@ public enum MessageType
 {
     Hello,
     Start,
+    Lobby,
     Play,
+    Wait,
     End
 }
 
 [Serializable]
-public class Message
+public class StartMessage
 {
     public MessageType Type;
     public string Text;
-    public byte[] Data;
 
     // Constructor to initialize the properties
-    public Message(MessageType type, string text, byte[] data)
+    public StartMessage(MessageType type, string text)
     {
         Type = type;
         Text = text;
-        Data = data;
     }
+}
+
+[Serializable]
+public class PlayMessage
+{
+    public int point;
+    public MessageType type;
+    public Data data;
+}
+
+[Serializable]
+public class Data
+{
+    public string hint;
+    public string currentAnswer;
 }
 

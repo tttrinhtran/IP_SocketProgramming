@@ -29,12 +29,12 @@ public class StartSceneController : MonoBehaviour
         string username = usernameInput.text;
         Debug.Log("Username: " + username);
         // Create a message indicating start action with the username
-        Message startMessage = new Message(MessageType.Start, username, new byte[0]);
+        StartMessage startMessage = new StartMessage(MessageType.Start, username);
 
-
+        string jsonString=JsonUtility.ToJson(startMessage);
         // Send the message to the server
       
-        clientController.SendMessageToServer(startMessage);
+        clientController.SendMessageToServer(jsonString);
     }
  
 }
