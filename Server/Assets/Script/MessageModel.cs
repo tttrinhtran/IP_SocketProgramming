@@ -13,16 +13,14 @@ public enum Type{
     Start,
     Lobby, 
     Play,
+    Wait, 
     End,
-    Wait
 
 }
 [System.Serializable]
 public class Message
 {
-
     public int point; 
-    public string hint;
     public Type type;
     public Data data; 
 } 
