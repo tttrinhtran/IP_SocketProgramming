@@ -11,13 +11,14 @@ public class ClientController : MonoBehaviour
     private TcpClient client;
     private NetworkStream stream;
     private bool isConnected = false;
-    public Canvas StartScene, PlayScene, EndScene;
+    public Canvas StartScene, PlayScene, EndScene, LobbyScene;
     
 
     void Start()
     {
         PlayScene.gameObject.SetActive(false);
         EndScene.gameObject.SetActive(false);
+        LobbyScene.gameObject.SetActive(false);
         ConnectToServer();
     }
 
@@ -39,11 +40,11 @@ public class ClientController : MonoBehaviour
             // Start a new thread to receive messages from the server
             Thread receiveThread = new Thread(new ThreadStart(ReceiveMessages));
             receiveThread.Start();
-            Message startMessage = new Message(MessageType.Hello, "Client connected", new byte[0]);
+            StartMessage startMessage = new StartMessage(MessageType.Hello, "Client connected");
             ;
-
+            string  jsonString = JsonUtility.ToJson(startMessage);
             // Send the start message to the server
-            SendMessageToServer(startMessage);
+            SendMessageToServer(jsonString);
         }
         catch (Exception ex)
         {
@@ -86,31 +87,30 @@ public class ClientController : MonoBehaviour
     {
         try
         {
-            // Parse JSON data
-            Message receivedMessage = JsonUtility.FromJson<Message>(messageJson);
-
-            // Now you can access the properties of the received message
-            Debug.Log("Received message Type: " + receivedMessage.Type);
-            Debug.Log("Received message Text: " + receivedMessage.Text);
-            // Debug.Log("Received message Data: " + receivedMessage.Data); // Use this line if Data is not a byte array
-
-            // Example: Handle the received message based on its type
-            switch (receivedMessage.Type)
+            // Deserialize JSON data into appropriate message class based on its type
+            if (messageJson.Contains("Start"))
             {
-                case MessageType.Start:
-                    StartScene.gameObject.SetActive(false);
-                    PlayScene.gameObject.SetActive(true);
-                    EndScene.gameObject.SetActive(false);
-                    break;
-                case MessageType.Play:
-                    // Handle play message
-                    break;
-                case MessageType.End:
-                    // Handle end message
-                    break;
-                default:
-                    // Handle unrecognized message type
-                    break;
+                StartMessage startMessage = JsonUtility.FromJson<StartMessage>(messageJson);
+                HandleStartMessage(startMessage);
+            }
+            else if (messageJson.Contains("Play") || messageJson.Contains("Wait"))
+            {
+                PlayMessage playMessage = JsonUtility.FromJson<PlayMessage>(messageJson);
+                HandlePlayMessage(playMessage);
+            }
+            else if (messageJson.Contains("End"))
+            {
+               // EndMessage endMessage = JsonUtility.FromJson<EndMessage>(messageJson);
+                // HandleEndMessage(endMessage);
+            }
+            else if (messageJson.Contains("Lobby"))
+            {
+                //LobbyMessage lobbyMessage = JsonUtility.FromJson<LobbyMessage>(messageJson);
+                // HandleLobbyMessage(lobbyMessage);
+            }
+            else
+            {
+                Debug.LogWarning("Received unrecognized message: " + messageJson);
             }
         }
         catch (Exception ex)
@@ -132,25 +132,48 @@ public class ClientController : MonoBehaviour
     }
 
     // Example method to send a message to the server
-    public void SendMessageToServer(Message message)
+    public void SendMessageToServer(string message)
     {
         try
-        {
-            // Convert the message to a JSON string
-            string jsonString = JsonUtility.ToJson(message);
+        {            
 
             // Convert the JSON string to bytes
-            byte[] buffer = System.Text.Encoding.UTF8.GetBytes(jsonString);
+            byte[] buffer = System.Text.Encoding.UTF8.GetBytes(message);
 
             // Send the bytes to the server
             stream.Write(buffer, 0, buffer.Length);
+            Debug.Log("Sent message to server: " + message);
 
-            Debug.Log("Sent message to server: " + message.Text);
         }
         catch (Exception ex)
         {
             Debug.LogError("Failed to send message to server: " + ex.Message);
         }
     }
+    private void HandleStartMessage(StartMessage startMessage)
+    {
+        // Access and process the properties of the StartMessage
+        Debug.Log("Received Start message. Text: " + startMessage.Text);
+        if (startMessage.Text == "OK!")
+        {
+            StartScene.gameObject.SetActive(false);
+            PlayScene.gameObject.SetActive(true);
+            EndScene.gameObject.SetActive(false);
+            LobbyScene.gameObject.SetActive(false);
+        }
+      
+    }
+    private void HandlePlayMessage(PlayMessage playMessage)
+    {
+       StartScene.gameObject.SetActive(false);
+        PlayScene.gameObject.SetActive(true);
+        EndScene.gameObject.SetActive(false);
+        LobbyScene.gameObject.SetActive(false);
+        
+        playSceneController playSceneController = PlayScene.GetComponent<playSceneController>();
+        playSceneController.updateUI(playMessage);
+
+    }
+
 
 }
