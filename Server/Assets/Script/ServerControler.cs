@@ -7,12 +7,13 @@ using System.Threading;
 using UnityEngine.UI;
 using System.IO;
 using Unity.Burst.CompilerServices;
+using UnityEditor.PackageManager;
 
 public class ServerController : MonoBehaviour
 {
     private TcpListener tcpListener;
     private List<ClientHandler> clients = new List<ClientHandler>();
-    private bool canBroadcast = false;
+
     private bool acceptingClients = true; // New variable to track whether to accept clients
     private List<Thread> clientThreads = new List<Thread>();
 
@@ -47,43 +48,24 @@ public class ServerController : MonoBehaviour
         {
             TcpClient tcpClient = tcpListener.AcceptTcpClient();
             Debug.Log("Client connected");
-
             ClientHandler clientHandler = new ClientHandler(tcpClient, this);
             Thread clientThread = new Thread(new ThreadStart(clientHandler.HandleClient));
             clientThread.Start();
-
             clients.Add(clientHandler);
-
-            // Set canBroadcast to true if at least one client is connected
-            if (!canBroadcast && clients.Count > 0)
-            {
-                GetConnectedClients();
-            }
         }
     }
-
-    public void BroadcastMessage(string message, ClientHandler sender)
+    private void setUpClient(ClientHandler client)
     {
-        // Only broadcast message if at least one client is connected
-        if (canBroadcast)
-        {
-            lock (clients)
-            {
-                foreach (ClientHandler client in clients)
-                {
-                    if (client != sender)
-                    {
-                        client.SendMessage(message);
-                    }
-                }
-            }
-        }
+    
+
     }
 
+ 
+   
     //--------------------------------------------------------
     public void HandleClientMessage(ClientHandler client, string message)
     {
-        // Raise the ClientMessageReceived event when a message is received from a client
+        client.ConvertMessageToJSON(message);
         ClientMessageReceived?.Invoke(client,message);
     }
     public void NotifyClientDisconnected(ClientHandler client)
@@ -95,11 +77,7 @@ public class ServerController : MonoBehaviour
     public void RemoveClient(ClientHandler client)
     {
         clients.Remove(client);
-        // If no clients are left, set canBroadcast back to false
-        if (clients.Count == 0)
-        {
-            canBroadcast = false;
-        }
+
     }
 
     // Method to be called by the button
@@ -121,14 +99,14 @@ public class ServerController : MonoBehaviour
     }
 
    
-public void SendMessageToClient(string clientIdentifier, string message)
+public void SendMessageToClient(string clientIdentifier, Message message)
 {
     foreach (ClientHandler client in clients)
     {
         if (client.GetClientInfo() == clientIdentifier)
         {
-            client.SendMessage(message);
-            return; // Once the message is sent, exit the loop
+            client.SendJSON(message);
+            return; 
         }
     }
     Debug.LogError("Client not found: " + clientIdentifier);
@@ -141,8 +119,6 @@ public void SendMessageToClient(string clientIdentifier, string message)
     {
         try
         {
-          
-
             // Wait for all client threads to finish
             foreach (ClientHandler client in clients)
             {
@@ -176,57 +152,50 @@ public class ClientHandler
     private NetworkStream stream;
     private bool isRunning = true;
 
-
     public ClientHandler(TcpClient client, ServerController serverController)
     {
         this.client = client;
         this.serverController = serverController;
+        
     }
 
     public void HandleClient()
+{
+    try
     {
-        try
+        // Get client stream
+        stream = client.GetStream();
+        
+        while (isRunning)
         {
-            // Get client stream
-            stream = client.GetStream();
+            string message = ConvertMessageToJSON(ReadMessage());
             
-
-            // Message messageToSend = new Message();
-            // messageToSend.point = 100;
-            // messageToSend.hint = "Some hint";
-            // messageToSend.type = Type.Lobby;
-            // messageToSend.data = new Data();
-            // messageToSend.data.hint = "Data hint";
-            // messageToSend.data.currentAnswer = "Answer";
-
-            // // Send the JSON object to the client
-            // SendJSON(messageToSend);
-
-            
-            while (isRunning)
-            {
-                byte[] buffer = new byte[1024];
-                int bytesRead = stream.Read(buffer, 0, buffer.Length);
-                string message = System.Text.Encoding.ASCII.GetString(buffer, 0, bytesRead);
-                Debug.Log(message);
-                serverController.HandleClientMessage(this,message);
-               
-                //serverController.BroadcastMessage(message, this);
-            }
-        }
-        catch (SocketException ex)
-        {
-            Debug.LogError("Client disconnected: " + ex.Message);
-            serverController.NotifyClientDisconnected(this); // Notify when a client is disconnected
-        }
-        finally
-        {
-            // Cleanup
-            serverController.RemoveClient(this);
-            stream.Close();
-            client.Close();
+            Debug.Log(message);
+            serverController.HandleClientMessage(this, message);
+           
+      
         }
     }
+    catch (SocketException ex)
+    {
+        Debug.LogError("Client disconnected: " + ex.Message);
+        serverController.NotifyClientDisconnected(this); // Notify when a client is disconnected
+    }
+    finally
+    {
+        // Cleanup
+        serverController.RemoveClient(this);
+        stream.Close();
+        client.Close();
+    }
+}
+
+private string ReadMessage()
+{
+    byte[] buffer = new byte[1024];
+    int bytesRead = stream.Read(buffer, 0, buffer.Length);
+    return System.Text.Encoding.ASCII.GetString(buffer, 0, bytesRead);
+}
     public void SendMessage(string message)
     {
         try
@@ -293,6 +262,42 @@ public class ClientHandler
             Debug.LogError("Error sending JSON object: " + ex.Message);
         }
     }
+    public string ConvertMessageToJSON(string message)
+{
+    try
+    {
+      
+        string[] messageParts = message.Split(',');
+        Type type= (Type)Enum.Parse(typeof(Type), messageParts[0]);
+        if(type==Type.Start)
+        {
+            StartMessage startMessage = new StartMessage(Type.Start, messageParts[1]);
+            return JsonUtility.ToJson(startMessage);
+        }
+        else if(type==Type.Play)
+        {
+
+            // PlayMessage playMessage = new PlayMessage();
+            // playMessage.type = Type.Play;
+            // playMessage.point = int.Parse(messageParts[1]);
+            // playMessage.data = new Data();
+            // playMessage.data.hint= messageParts[2];
+            // playMessage.data.currentAnswer = messageParts[3];
+            // return JsonUtility.ToJson(playMessage);
+            return null;
+        }
+        
+        return null;
+
+      
+    }
+    catch (Exception ex)
+    {
+        Debug.LogError("Error converting message to JSON: " + ex.Message);
+        return null;
+    }
+}
+
 
     public string GetClientInfo()
 {

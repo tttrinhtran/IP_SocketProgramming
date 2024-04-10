@@ -9,8 +9,8 @@ public class UIController : MonoBehaviour
 {
     public Button startButton;
     public Button stopButton;
-    public ServerController ServerController;
-    public GameplayData GameplayData;
+    public GameplayControler gameplayControler;
+ 
     public TMP_Text clientMessageText;
 
     private Dictionary<ClientHandler, List<string>> clientMessages = new Dictionary<ClientHandler, List<string>>(); // Store messages per client
@@ -19,52 +19,13 @@ public class UIController : MonoBehaviour
 
     void Start()
     {
-        startButton.onClick.AddListener(StartGame);
-        stopButton.onClick.AddListener(StopServer);
-        ServerController.ClientMessageReceived += AddMessageToList;
-        ServerController.ClientDisconnected += HandleClientDisconnect;
+        startButton.onClick.AddListener(gameplayControler.innitGame);
+        stopButton.onClick.AddListener(gameplayControler.StopGame);
+       
     }
 
-    void StartGame()
-    {
-        ServerController.StopAcceptingClients();
-        GameplayData.GameplayQuestion question = GameplayData.GetRandomWord();
-        if (question != null)
-        {
-            Debug.Log("Random Question: " + question.Keyword);
-          
-        }
-        else
-        {
-            Debug.LogError("No questions available.");
-        }
-
-    }
-
-    void StopServer()
-    {
-       ServerController.StopServer();
-    }
-
-    void AddMessageToList(ClientHandler client, string message)
-    {
-        if (!clientMessages.ContainsKey(client))
-            clientMessages.Add(client, new List<string>());
-
-        clientMessages[client].Add(message);
-        Debug.Log("Message received: " + message);
-        UpdateUIWithClientMessages();
-    }
-
-    void HandleClientDisconnect(ClientHandler client)
-    {
-        if (clientMessages.ContainsKey(client))
-        {
-            clientMessages.Remove(client);
-            UpdateUIWithClientMessages();
-        }
-    }
-    void UpdateUIWithClientMessages()
+  
+    void UpdateLobby()
     {
         // Check if clientMessageText is not null before accessing it
         if (clientMessageText != null)
