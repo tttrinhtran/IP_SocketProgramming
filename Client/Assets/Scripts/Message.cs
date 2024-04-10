@@ -28,8 +28,8 @@ public class StartMessage
 [Serializable]
 public class PlayMessage
 {
-    public int point;
     public MessageType type;
+    public int point;
     public Data data;
 }
 
