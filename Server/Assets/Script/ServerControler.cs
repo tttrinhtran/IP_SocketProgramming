@@ -7,30 +7,6 @@ using System.Threading;
 using UnityEngine.UI;
 using System.IO;
 using Unity.Burst.CompilerServices;
-public enum Type{
-    Hello,
-    Start,
-    Lobby, 
-    Play,
-    End,
-    Wait
-
-}
-[Serializable]
-public class Message
-{
-
-    public int point; 
-    public string hint;
-    public Type type;
-    public Data data; 
-} 
-
-[Serializable]
-public class Data{
-    public string hint; 
-    public string currentAnswer; 
-}
 
 public class ServerController : MonoBehaviour
 {
@@ -215,17 +191,16 @@ public class ClientHandler
             stream = client.GetStream();
             
 
-            Message messageToSend = new Message();
-            messageToSend.userID = "user123";
-            messageToSend.point = 100;
-            messageToSend.hint = "Some hint";
-            messageToSend.type = Type.Lobby;
-            messageToSend.data = new Data();
-            messageToSend.data.hint = "Data hint";
-            messageToSend.data.currentAnswer = "Answer";
+            // Message messageToSend = new Message();
+            // messageToSend.point = 100;
+            // messageToSend.hint = "Some hint";
+            // messageToSend.type = Type.Lobby;
+            // messageToSend.data = new Data();
+            // messageToSend.data.hint = "Data hint";
+            // messageToSend.data.currentAnswer = "Answer";
 
-            // Send the JSON object to the client
-            SendJSON(messageToSend);
+            // // Send the JSON object to the client
+            // SendJSON(messageToSend);
 
             
             while (isRunning)

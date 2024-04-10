@@ -81,4 +81,5 @@ public class GameplayData : MonoBehaviour
             Description = description;
         }
     }
+    
 }
