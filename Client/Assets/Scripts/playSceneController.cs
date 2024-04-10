@@ -84,7 +84,5 @@ public class playSceneController : MonoBehaviour
             Notification.text="Opponent's Turn";
             SubmitButton.interactable=false;
         }
-       
-
     }
 }
