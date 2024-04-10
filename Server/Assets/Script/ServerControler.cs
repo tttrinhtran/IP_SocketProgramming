@@ -7,6 +7,30 @@ using System.Threading;
 using UnityEngine.UI;
 using System.IO;
 using Unity.Burst.CompilerServices;
+public enum Type{
+    Hello,
+    Start,
+    Lobby, 
+    Play,
+    End,
+    Wait
+
+}
+[Serializable]
+public class Message
+{
+
+    public int point; 
+    public string hint;
+    public Type type;
+    public Data data; 
+} 
+
+[Serializable]
+public class Data{
+    public string hint; 
+    public string currentAnswer; 
+}
 
 public class ServerController : MonoBehaviour
 {
@@ -57,7 +81,7 @@ public class ServerController : MonoBehaviour
             // Set canBroadcast to true if at least one client is connected
             if (!canBroadcast && clients.Count > 0)
             {
-                canBroadcast = true;
+                GetConnectedClients();
             }
         }
     }
@@ -79,6 +103,8 @@ public class ServerController : MonoBehaviour
             }
         }
     }
+
+    //--------------------------------------------------------
     public void HandleClientMessage(ClientHandler client, string message)
     {
         // Raise the ClientMessageReceived event when a message is received from a client
@@ -107,6 +133,34 @@ public class ServerController : MonoBehaviour
         Debug.Log("Stopped accepting new clients");
     }
 
+       public List<string> GetConnectedClients()
+    {
+        List<string> connectedClients = new List<string>();
+        foreach (ClientHandler client in clients)
+        {
+            connectedClients.Add(client.GetClientInfo());
+            Debug.Log("Info"+client.GetClientInfo());
+        }
+        return connectedClients;
+    }
+
+   
+public void SendMessageToClient(string clientIdentifier, string message)
+{
+    foreach (ClientHandler client in clients)
+    {
+        if (client.GetClientInfo() == clientIdentifier)
+        {
+            client.SendMessage(message);
+            return; // Once the message is sent, exit the loop
+        }
+    }
+    Debug.LogError("Client not found: " + clientIdentifier);
+}
+
+
+
+//---------------------------------Stop Server---------------------------------
     public void StopServer()
     {
         try
@@ -137,28 +191,6 @@ public class ServerController : MonoBehaviour
             Debug.LogError("Error stopping server: " + ex.Message);
         }
     }
-}
-public enum Type{
-    Hello,
-    Start,
-    Lobby, 
-    Play,
-    End
-}
-[Serializable]
-public class Message
-{
-    public string userID; 
-    public int point; 
-    public string hint;
-    public Type type;
-    public Data data; 
-} 
-
-[Serializable]
-public class Data{
-    public string hint; 
-    public string currentAnswer; 
 }
 
 public class ClientHandler
@@ -286,5 +318,15 @@ public class ClientHandler
             Debug.LogError("Error sending JSON object: " + ex.Message);
         }
     }
+
+    public string GetClientInfo()
+{
+    if (client != null && client.Client.RemoteEndPoint != null)
+    {
+        return client.Client.RemoteEndPoint.ToString();
+    }
+    return "Unknown";
+}
+
 
 }
