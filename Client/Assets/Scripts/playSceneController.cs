@@ -13,9 +13,8 @@ public class playSceneController : MonoBehaviour
     public TMPro.TMP_InputField InputField;
     public Button SubmitButton;
     public ClientController clientController;
-    private float time = 10f; // Changed to float for smooth countdown
-    private int userID;
-    private MessageType type = 0;
+    private float time = 60f; // Changed to float for smooth countdown
+    public MessageType type;
 
     // Start is called before the first frame update
     void Start()
@@ -66,7 +65,9 @@ public class playSceneController : MonoBehaviour
         Debug.Log("Answer: " + answer);
         StartMessage answerMessage = new StartMessage(type, answer);
         string jsonString = JsonUtility.ToJson(answerMessage);
-        clientController.SendMessageToServer(jsonString);
+        clientController.SendMessageToServer(jsonString); 
+        SubmitButton.interactable=false;
+
     }
 
     public void updateUI(PlayMessage playMessage)
@@ -76,15 +77,18 @@ public class playSceneController : MonoBehaviour
         Keyword.text=playMessage.data.currentAnswer;
         Score.text="Score: "+playMessage.point.ToString();
         type=playMessage.Type;
-        if (playMessage.Type==MessageType.Play)
+        Debug.Log("Type: "+type + "MessageType: " + MessageType.Play);
+        
+        if ((MessageType)playMessage.Type==MessageType.Play)
         {
             Notification.text="Your Turn";
             SubmitButton.interactable=true;
+            Debug.Log("play bitch");            time = 60;
         }
         else
         {
             Notification.text="Opponent's Turn";
-            SubmitButton.interactable=false;
+            SubmitButton.interactable = false;
         }
     }
 }
