@@ -1,7 +1,9 @@
-3
+4
 Hello
-Hello from the other side
+A general greeting sentence
 Python
 A programing language
 Candy
 A sweet treat
+UCLA
+Mr.Nam's university

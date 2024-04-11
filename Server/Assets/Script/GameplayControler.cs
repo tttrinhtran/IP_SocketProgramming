@@ -4,6 +4,7 @@ using UnityEngine;
 using System.Linq;
 using Unity.VisualScripting;
 using UnityEditor.MPE;
+using System;
 
 public class GameplayControler : MonoBehaviour
 {
@@ -14,7 +15,9 @@ public class GameplayControler : MonoBehaviour
     GameplayQuestion gameplayQuestion;
    int turn = 0; 
    ClientHandler curUser;
-    List<ClientHandler> sortedUsers ;
+   List<string> connectedClients = new List<string>();
+    List<ClientHandler> sortedUsers = new List<ClientHandler>();
+    string curString = "";
         
     
         void Start()
@@ -24,13 +27,13 @@ public class GameplayControler : MonoBehaviour
             serverControler = FindObjectOfType<ServerController>();
             gameplayData = FindObjectOfType<GameplayData>();
             uiControler = FindObjectOfType<UIController>();
-            innitGame();
-
+            // innitGame();    
+            startGame();
             if (serverControler != null)
             {
 
                 serverControler.ClientMessageReceived += (client, message) => MessageHandle(client, message);
-                serverControler.ClientDisconnected += HandleClientDisconnect;
+                serverControler.ClientDisconnected += (client) => HandleClientDisconnect(client);
                 
             }
             else
@@ -53,8 +56,15 @@ public class GameplayControler : MonoBehaviour
     // Update is called once per frame
    public void innitGame() //getGamedata+ Client
    {
-    serverControler.StopAcceptingClients();
-      gameplayQuestion= gameplayData.GetRandomWord();
+    var sortedClients = clientMessages.Keys.OrderBy(client => client.clientModel.UserId).ToList();
+
+        // Retrieve the sorted list of users based on their UserIDs
+        sortedUsers = sortedClients.Select(client => client).ToList();
+
+
+        serverControler.StopAcceptingClients();
+        gameplayData.LoadGameplayDataFromFile();
+        gameplayQuestion= gameplayData.GetRandomWord();
         if (gameplayQuestion != null)
         {
             Debug.Log("Random Question: " + gameplayQuestion.Keyword);
@@ -64,9 +74,29 @@ public class GameplayControler : MonoBehaviour
         {
             Debug.LogError("No questions available.");
         }
-
-
+        Debug.Log("Sort user size: " + sortedUsers.Count); 
+        curUser = sortedUsers[0];
+        foreach(ClientHandler client in sortedUsers)
+        {
+            Data data = new Data();
+            data.hint = gameplayQuestion.Description;
+            int tmp = gameplayQuestion.Keyword.Length; 
+            for(int i = 0; i < tmp; i++)
+            {
+                data.currentAnswer += "_";
+            }
+            curString = data.currentAnswer; 
+            if(client == curUser)
+            {
+                handlePlayMessage(0, Type.Play, data, client);
+            }
+            else
+            {
+                handlePlayMessage(0, Type.Wait, data, client);
+            }
+        }
    }
+
     public void StopGame()
     {
        serverControler.StopServer();
@@ -90,12 +120,16 @@ public class GameplayControler : MonoBehaviour
        
         if(messageClient.Type == Type.Hello)
         {
-            setTheUser(client, messageClient); 
+            
+        //    GetConnectedClientsToLobby(client);
+        //    serverControler.BroadcastToAllClients(sendLobbyUsers());
         }
         
         if (messageClient.Type == Type.Start)
         {
             Debug.Log("Yo");
+            setTheUser(client, messageClient); 
+            GetConnectedClientsToLobby(client);
             // setTheUser(client, messageClient);
             if(client.clientModel == null){
                 Debug.Log("Client null"); 
@@ -104,22 +138,22 @@ public class GameplayControler : MonoBehaviour
             Debug.Log("Update Lobby");
         }
 
-        // if(messageClient.Type == Type.Lobby)
-        // {
-            
-        // }
-
         if(messageClient.Type == Type.Play)
         {
             gameLogic(messageClient, client);
         }
-      
-      if(messageClient.Type==Type.Wait)
-      {
-        
-        
-      }
        
+
+    }
+
+    public List<string> GetConnectedClientsToLobby(ClientHandler client)
+    {
+        
+    
+        connectedClients.Add(client.GetClientInfo());
+        Debug.Log("Info"+client.GetClientInfo());
+        
+        return connectedClients;
     }
     void setTheUser(ClientHandler client, MessageClient message)
     {
@@ -132,8 +166,15 @@ public class GameplayControler : MonoBehaviour
     {
         if (clientMessages.ContainsKey(client))
         {
-            clientMessages.Remove(client);
-            sendLobbyUsers();
+            Debug.Log("Client disconnected: " + client.GetClientInfo());
+            connectedClients.Remove(client.GetClientInfo());
+             clientMessages.Remove(client);
+            serverControler.RemoveClient(client);
+            // client.CloseConnection();
+            
+           
+            
+            UpdateLobby();
            //uiControler.UpdateLobby();
         }
     }
@@ -152,79 +193,187 @@ public class GameplayControler : MonoBehaviour
     {
         MessageClient messageClient = new MessageClient(); 
         messageClient.Type = Type.Lobby;
-        messageClient.Text = string.Join("\n", serverControler.GetConnectedClients());
+        Debug.Log("Shiba: "+ connectedClients[0]);
+        messageClient.Text = string.Join("\n", connectedClients);
 
         return JsonUtility.ToJson(messageClient);
     }
 
     public void startGame()
     {
-        var sortedClients = clientMessages.Keys.OrderBy(client => client.clientModel.UserId).ToList();
-
-        // Retrieve the sorted list of users based on their UserIDs
-        List<ClientHandler> sortedUsers = sortedClients.Select(client => client).ToList();
-        
         
         
         uiControler.startButton.onClick.AddListener(innitGame);
     }
 
-    Message handlePlayMessage(int point, Type type, Data data)
+    Message createPlayMessage(int point, Type type, Data data)
     {
         Message res = new Message();
         res.point = point; 
-        res.type = type;
+        res.Type = type;
         res.data = data; 
         return res; 
     }
     
-    int checkAnswer(string input, string answer)
-    { 
-        if(input.Length >1) 
+    Tuple<int, string> checkAnswer(string input, string answer)
+{
+    int point = 0;
+    // string maskedString = "";
+
+    if (input.Length > 1)
+    {
+        if (turn < 2) 
         {
-            if(turn < 2) return 0; 
-            else{
-                if(input == answer) return 5; 
-                else return 0; 
+            // If it's not the player's turn, return 0 points and the original answer
+            return Tuple.Create(point, curString);
+        }
+        else
+        {
+            if (input == answer) 
+            {
+                // If the input matches the answer, return 5 points and the original answer
+                point = 5;
+                curString = answer;
+            }
+            else 
+            {
+                // If the input does not match the answer, return 0 points and the original answer
+                return Tuple.Create(point, curString);
             }
         }
+    }
+    else
+    {
+        if (answer.Contains(input) && input.Length != answer.Length)
+        {
+            // If the input is contained in the answer but is not equal to the answer, return 1 point and the masked answer
+            point = 1;
+            curString = MaskAnswer(answer, input);
+        }
         else
         {
-            if(answer.Contains(input) && input.Length != answer.Length) return 1; 
-            else return 0; 
+            // If the input is not contained in the answer or is equal to the answer, return 0 points and the original answer
+            point = 0; 
+            return Tuple.Create(point, curString);
         }
     }
+
+    // Return the point value and the masked string
+    return Tuple.Create(point, curString);
+}
+
+string MaskAnswer(string answer, string input)
+{
+    // Convert the answer and current string to char arrays for easier manipulation
+    char[] answerChars = answer.ToCharArray();
+    char[] curStringChars = curString.ToCharArray();
+
+    // Iterate through each character in the answer
+    for (int i = 0; i < answerChars.Length; i++)
+    {
+        // If the character matches the input or is already revealed in curString, keep it
+        if (answerChars[i] == input[0] || curStringChars[i] != '_')
+        {
+            curStringChars[i] = answerChars[i];
+        }
+    }
+
+    // Convert the char array back to a string and return
+    return new string(curStringChars);
+}
+
+
 
     void gameLogic(MessageClient messageClient, ClientHandler client)
-    {
-        
-        int point=checkAnswer(messageClient.Text, gameplayQuestion.Keyword);
-        client.clientModel.point += point;
-        if(point == 5)
-        {
-           endGame();
-        }
-        else if(point==1)
-        {
+{
+    Tuple<int, string> pointTuple = checkAnswer(messageClient.Text, gameplayQuestion.Keyword);
+    int point = pointTuple.Item1; // Extract the point value from the tuple
+    string resString = pointTuple.Item2; // Extract the masked answer from the tuple
 
-            Message curRes = handlePlayMessage(point, Type.Play, new Data());
-            serverControler.SendMessageToClient(client, curRes);
-            
+    // Update the client's points
+    client.clientModel.point += point;
+    curUser = client;
+    Data newData = new Data(); 
+    newData.hint = gameplayQuestion.Description;
+    newData.currentAnswer = resString; 
+     turn++; 
+    // Check if the game should end
+    if (point == 5 || turn == 5)
+    {
+        endGame();
+        return; 
+    }
+    else if (point == 1)
+    {
+        // Handle the message for the current client
+        handlePlayMessage(client.clientModel.point, Type.Play, newData, curUser);
+    }
+    else if(point == 0)
+    {
+        // Handle the message for the current client
+        Debug.Log("Point: " + point);
+       // handlePlayMessage(client.clientModel.point, Type.Wait, newData, client);
+
+        // Find the index of the current client in the sorted users list
+        int index = sortedUsers.FindIndex(c => c == curUser);
+
+        // Determine the next user
+      
+        if (index == sortedUsers.Count - 1)
+        {
+            curUser = sortedUsers[0];
         }
         else
         {
-            Message curRes = handlePlayMessage(point, Type.Wait, new Data());
-            serverControler.SendMessageToClient(client, curRes);
+            curUser = sortedUsers[index + 1];
         }
 
-
-
+        // Handle the message for the next client
+        handlePlayMessage(client.clientModel.point, Type.Play, newData, curUser);
     }
+
+    // Increment the turn counter
+   
+
+    foreach(ClientHandler clientHandler in sortedUsers)
+    {
+        if(clientHandler != curUser)
+        {
+            handlePlayMessage(clientHandler.clientModel.point, Type.Wait, newData, clientHandler);
+        }
+    }
+}
+
+    // Updated handlePlayMessage function to include the client parameter
+    void handlePlayMessage(int point, Type type, Data data, ClientHandler client)
+    {
+        // Create a message with the specified parameters
+        Message res = new Message();
+        res.point = point;
+        res.Type = type;
+        res.data = data;
+
+        // Send the message to the client
+        serverControler.SendMessageToClient(client, res);
+    }
+
     void endGame()
     {
+
         MessageClient messageClient = new MessageClient(); 
         messageClient.Type = Type.End;
         messageClient.Text = "Game Over";
         serverControler.BroadcastToAllClients(JsonUtility.ToJson(messageClient));
+    }
+
+    void closeProgram()
+    {
+        // them nut stop game
+        serverControler.StopServer();
+    }
+
+    public void BoardcastForAllClients(string message)
+    {
+        serverControler.BroadcastToAllClients(message);
     }
 }

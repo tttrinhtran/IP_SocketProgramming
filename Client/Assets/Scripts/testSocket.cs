@@ -34,7 +34,7 @@ public class ClientController : MonoBehaviour
         try
         {
             client = new TcpClient();
-            client.Connect("192.168.1.39", 8888); // Connect to localhost (127.0.0.1) on port 8888
+            client.Connect("127.0.0.1", 8888); // Connect to localhost (127.0.0.1) on port 8888
             stream = client.GetStream();
             isConnected = true;
             Debug.Log("Connected to server.");
