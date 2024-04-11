@@ -24,7 +24,7 @@ public class UIController : MonoBehaviour
        
     }
 
-  
+
     void UpdateLobby()
     {
         // Check if clientMessageText is not null before accessing it
@@ -54,7 +54,7 @@ public class UIController : MonoBehaviour
             {
                 Debug.Log("clientMessageText found and assigned successfully!");
                 // After successfully assigning, update the UI
-                UpdateUIWithClientMessages();
+                UpdateLobby();
             }
             else
             {

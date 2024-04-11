@@ -22,12 +22,14 @@ public class ServerController : MonoBehaviour
     void Start()
     {
         StartServer();
+        //StartServer2();
     }
 
     private void StartServer()
     {
         try
         {
+            //tcpListener = new TcpListener(IPAddress.Any, 8888);
             tcpListener = new TcpListener(IPAddress.Any, 8888);
             tcpListener.Start();
             Debug.Log("Server started. Waiting for connections...");
@@ -41,6 +43,25 @@ public class ServerController : MonoBehaviour
             Debug.LogError("Exception: " + ex.Message);
         }
     }
+private void StartServer2()
+{
+    try
+    {
+        IPAddress ipAddress = IPAddress.Parse("192.168.1.14");
+        TcpListener tcpListener = new TcpListener(ipAddress, 8888);
+        tcpListener.Start();
+        Debug.Log("Server started at " + ipAddress.ToString() + ". Waiting for connections...");
+        Debug.Log("Server started successfully.");
+
+        Thread acceptThread = new Thread(new ThreadStart(AcceptClients));
+        acceptThread.Start();
+    }
+    catch (Exception ex)
+    {
+        Debug.LogError("Exception: " + ex.Message);
+    }
+}
+
 
     private void AcceptClients()
     {
@@ -52,20 +73,21 @@ public class ServerController : MonoBehaviour
             Thread clientThread = new Thread(new ThreadStart(clientHandler.HandleClient));
             clientThread.Start();
             clients.Add(clientHandler);
+
+            if( clients.Count>0)
+            {
+                GetConnectedClients();
+            }
         }
     }
-    private void setUpClient(ClientHandler client)
-    {
     
-
-    }
 
  
    
     //--------------------------------------------------------
     public void HandleClientMessage(ClientHandler client, string message)
     {
-        client.ConvertMessageToJSON(message);
+       
         ClientMessageReceived?.Invoke(client,message);
     }
     public void NotifyClientDisconnected(ClientHandler client)
@@ -76,7 +98,7 @@ public class ServerController : MonoBehaviour
 
     public void RemoveClient(ClientHandler client)
     {
-        clients.Remove(client);
+        clients.Remove(client);  
 
     }
 
@@ -151,12 +173,19 @@ public class ClientHandler
     private ServerController serverController;
     private NetworkStream stream;
     private bool isRunning = true;
+    ClientModel clientModel;
 
     public ClientHandler(TcpClient client, ServerController serverController)
     {
         this.client = client;
         this.serverController = serverController;
+        clientModel=new ClientModel();
         
+    }
+    public void setClientModel(string userId)
+    {
+        clientModel.UserId=userId;
+        clientModel.point=0;
     }
 
     public void HandleClient()
@@ -168,8 +197,7 @@ public class ClientHandler
         
         while (isRunning)
         {
-            string message = ConvertMessageToJSON(ReadMessage());
-            
+            string message = ReadMessage();
             Debug.Log(message);
             serverController.HandleClientMessage(this, message);
            
@@ -196,7 +224,9 @@ private string ReadMessage()
     int bytesRead = stream.Read(buffer, 0, buffer.Length);
     return System.Text.Encoding.ASCII.GetString(buffer, 0, bytesRead);
 }
-    public void SendMessage(string message)
+    
+    
+public void SendMessage(string message)
     {
         try
         {
@@ -262,32 +292,13 @@ private string ReadMessage()
             Debug.LogError("Error sending JSON object: " + ex.Message);
         }
     }
-    public string ConvertMessageToJSON(string message)
+    public MessageClient ConvertMessageToJSON(string message)
 {
     try
     {
       
-        string[] messageParts = message.Split(',');
-        Type type= (Type)Enum.Parse(typeof(Type), messageParts[0]);
-        if(type==Type.Start)
-        {
-            StartMessage startMessage = new StartMessage(Type.Start, messageParts[1]);
-            return JsonUtility.ToJson(startMessage);
-        }
-        else if(type==Type.Play)
-        {
-
-            // PlayMessage playMessage = new PlayMessage();
-            // playMessage.type = Type.Play;
-            // playMessage.point = int.Parse(messageParts[1]);
-            // playMessage.data = new Data();
-            // playMessage.data.hint= messageParts[2];
-            // playMessage.data.currentAnswer = messageParts[3];
-            // return JsonUtility.ToJson(playMessage);
-            return null;
-        }
-        
-        return null;
+        MessageClient messageClient = JsonUtility.FromJson<MessageClient>(message);
+        return messageClient;
 
       
     }

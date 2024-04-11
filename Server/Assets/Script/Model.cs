@@ -35,50 +35,26 @@ public class Data{
 
 public class ClientModel
 {
-     string UserId;
+     public string UserId;
      public int point; 
-     ClientHandler clientHandler;
-
-    public ClientModel(ClientHandler clientHandler)
+    public ClientModel()
     {
-    
-    
-        this.clientHandler = clientHandler;
-    }
-    public void setUserID(string UserId){
-        this.UserId = UserId;
-    }
-    public void setPoint(int point){
-        this.point = point;
-    }
-
-    public int getPoint(){
-        return this.point;
-    }
-    public string getUserId(){
-        return this.UserId;
+       
     }
 
   
 }
 [Serializable]
-public class StartMessage
+public class MessageClient
 {
     public Type Type;
     public string Text;
 
     // Constructor to initialize the properties
-    public StartMessage(Type type, string text)
+    public MessageClient(Type type, string text)
     {
         Type = type;
         Text = text;
     }
 }
 
-//[Serializable]
-// public class PlayMessage
-// { 
-//     public Type type;
-//     public int point;
-//     public DataClient data;
-// }
