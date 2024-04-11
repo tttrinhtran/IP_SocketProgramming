@@ -33,7 +33,7 @@ public class ClientController : MonoBehaviour
         try
         {
             client = new TcpClient();
-            client.Connect("192.168.1.14", 8888); // Connect to localhost (127.0.0.1) on port 8888
+            client.Connect("127.0.0.1", 8888); // Connect to localhost (127.0.0.1) on port 8888
             stream = client.GetStream();
             isConnected = true;
             Debug.Log("Connected to server.");
@@ -116,6 +116,11 @@ public class ClientController : MonoBehaviour
                     StartMessage startMessage = JsonConvert.DeserializeObject<StartMessage>(messageJson);
                     HandleStartMessage(startMessage);
                     break;
+                case MessageType.Lobby:
+                    Debug.Log("Received Lobby message");
+                    StartMessage lobbyMessage = JsonConvert.DeserializeObject<StartMessage>(messageJson);
+                    HandleLobbyMessage(lobbyMessage);
+                    break;
                 case MessageType.Play:
                     Debug.Log("Received Play message");
                     PlayMessage playMessage = JsonConvert.DeserializeObject<PlayMessage>(messageJson);
@@ -173,9 +178,9 @@ public class ClientController : MonoBehaviour
         if (startMessage.Text == "OK!")
         {
             StartScene.gameObject.SetActive(false);
-            PlayScene.gameObject.SetActive(true);
+            PlayScene.gameObject.SetActive(false);
             EndScene.gameObject.SetActive(false);
-            LobbyScene.gameObject.SetActive(false);
+            LobbyScene.gameObject.SetActive(true);
         }
       
     }
@@ -189,6 +194,14 @@ public class ClientController : MonoBehaviour
         PlayScene.GetComponent<playSceneController>().updateUI(playMessage);
 
     }
-
+    private void HandleLobbyMessage(StartMessage startMessage)
+    {
+        StartScene.gameObject.SetActive(false);
+        PlayScene.gameObject.SetActive(false);
+        EndScene.gameObject.SetActive(false);
+        LobbyScene.gameObject.SetActive(true);
+        Debug.Log("Received Lobby message. Text: " + startMessage.Text);
+        LobbyScene.GetComponent<lobbySceneController>().updateUI(startMessage.Text);
+    }
 
 }
