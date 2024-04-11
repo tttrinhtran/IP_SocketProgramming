@@ -69,17 +69,17 @@ public class GameplayData : MonoBehaviour
       
     }
 
+ 
+}
 
-    public class GameplayQuestion
+public class GameplayQuestion
+{
+    public string Keyword { get; }
+    public string Description { get; }
+
+    public GameplayQuestion(string keyword, string description)
     {
-        public string Keyword { get; }
-        public string Description { get; }
-
-        public GameplayQuestion(string keyword, string description)
-        {
-            Keyword = keyword;
-            Description = description;
-        }
+        Keyword = keyword;
+        Description = description;
     }
-    
 }
