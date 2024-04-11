@@ -20,9 +20,7 @@ public enum Type{
 [System.Serializable]
 public class Message
 {
-
     public int point; 
-    public string hint;
     public Type type;
     public Data data; 
 } 
@@ -56,5 +54,6 @@ public class MessageClient
         Type = type;
         Text = text;
     }
+    public MessageClient(){}
 }
 

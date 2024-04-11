@@ -87,7 +87,6 @@ private void StartServer2()
     //--------------------------------------------------------
     public void HandleClientMessage(ClientHandler client, string message)
     {
-       
         ClientMessageReceived?.Invoke(client,message);
     }
     public void NotifyClientDisconnected(ClientHandler client)
@@ -121,17 +120,17 @@ private void StartServer2()
     }
 
    
-public void SendMessageToClient(string clientIdentifier, Message message)
+public void SendMessageToClient(ClientHandler clientHandler, Message message)
 {
     foreach (ClientHandler client in clients)
     {
-        if (client.GetClientInfo() == clientIdentifier)
+        if (client == clientHandler)
         {
             client.SendJSON(message);
             return; 
         }
     }
-    Debug.LogError("Client not found: " + clientIdentifier);
+    Debug.LogError("Client not found: ");
 }
 
 
@@ -165,6 +164,15 @@ public void SendMessageToClient(string clientIdentifier, Message message)
             Debug.LogError("Error stopping server: " + ex.Message);
         }
     }
+
+    public void BroadcastToAllClients(string message)
+    {
+        foreach (ClientHandler client in clients)
+        {
+            client.SendMessage(message);
+        }
+        Debug.Log("Message broadcasted to all clients: " + message);
+    }
 }
 
 public class ClientHandler
@@ -173,7 +181,7 @@ public class ClientHandler
     private ServerController serverController;
     private NetworkStream stream;
     private bool isRunning = true;
-    ClientModel clientModel;
+    public ClientModel clientModel;
 
     public ClientHandler(TcpClient client, ServerController serverController)
     {
@@ -189,44 +197,44 @@ public class ClientHandler
     }
 
     public void HandleClient()
-{
-    try
     {
-        // Get client stream
-        stream = client.GetStream();
-        
-        while (isRunning)
+        try
         {
-            string message = ReadMessage();
-            Debug.Log(message);
-            serverController.HandleClientMessage(this, message);
-           
-      
+            // Get client stream
+            stream = client.GetStream();
+            
+            while (isRunning)
+            {
+                string message = ReadMessage();
+                Debug.Log(message);
+                serverController.HandleClientMessage(this, message);
+            
+        
+            }
+        }
+        catch (SocketException ex)
+        {
+            Debug.LogError("Client disconnected: " + ex.Message);
+            serverController.NotifyClientDisconnected(this); // Notify when a client is disconnected
+        }
+        finally
+        {
+            // Cleanup
+            serverController.RemoveClient(this);
+            stream.Close();
+            client.Close();
         }
     }
-    catch (SocketException ex)
-    {
-        Debug.LogError("Client disconnected: " + ex.Message);
-        serverController.NotifyClientDisconnected(this); // Notify when a client is disconnected
-    }
-    finally
-    {
-        // Cleanup
-        serverController.RemoveClient(this);
-        stream.Close();
-        client.Close();
-    }
-}
 
-private string ReadMessage()
-{
-    byte[] buffer = new byte[1024];
-    int bytesRead = stream.Read(buffer, 0, buffer.Length);
-    return System.Text.Encoding.ASCII.GetString(buffer, 0, bytesRead);
-}
+    private string ReadMessage()
+    {
+        byte[] buffer = new byte[1024];
+        int bytesRead = stream.Read(buffer, 0, buffer.Length);
+        return System.Text.Encoding.ASCII.GetString(buffer, 0, bytesRead);
+    }
     
     
-public void SendMessage(string message)
+    public void SendMessage(string message)
     {
         try
         {
@@ -293,31 +301,30 @@ public void SendMessage(string message)
         }
     }
     public MessageClient ConvertMessageToJSON(string message)
-{
-    try
     {
-      
-        MessageClient messageClient = JsonUtility.FromJson<MessageClient>(message);
-        return messageClient;
+        try
+        {
+            MessageClient messageClient = new MessageClient(); 
+            messageClient = JsonUtility.FromJson<MessageClient>(message);
+            Debug.Log("Message Client: " + messageClient.Type + " " + messageClient.Text);
+            return messageClient;
 
-      
+        
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError("Error converting message to JSON: " + ex.Message);
+            return null;
+        }
     }
-    catch (Exception ex)
-    {
-        Debug.LogError("Error converting message to JSON: " + ex.Message);
-        return null;
-    }
-}
 
 
     public string GetClientInfo()
-{
-    if (client != null && client.Client.RemoteEndPoint != null)
     {
-        return client.Client.RemoteEndPoint.ToString();
+        if (client != null && client.Client.RemoteEndPoint != null)
+        {
+            return clientModel.UserId.ToString(); 
+        }
+        return "Unknown";
     }
-    return "Unknown";
-}
-
-
 }
