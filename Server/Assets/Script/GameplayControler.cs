@@ -33,7 +33,7 @@ public class GameplayControler : MonoBehaviour
             {
 
                 serverControler.ClientMessageReceived += (client, message) => MessageHandle(client, message);
-                serverControler.ClientDisconnected += HandleClientDisconnect;
+                serverControler.ClientDisconnected += (client) => HandleClientDisconnect(client);
                 
             }
             else
@@ -166,8 +166,15 @@ public class GameplayControler : MonoBehaviour
     {
         if (clientMessages.ContainsKey(client))
         {
-            clientMessages.Remove(client);
-            sendLobbyUsers();
+            Debug.Log("Client disconnected: " + client.GetClientInfo());
+            connectedClients.Remove(client.GetClientInfo());
+             clientMessages.Remove(client);
+            serverControler.RemoveClient(client);
+            // client.CloseConnection();
+            
+           
+            
+            UpdateLobby();
            //uiControler.UpdateLobby();
         }
     }
@@ -285,30 +292,30 @@ string MaskAnswer(string answer, string input)
 
     // Update the client's points
     client.clientModel.point += point;
-
-    // Set the current user
     curUser = client;
     Data newData = new Data(); 
     newData.hint = gameplayQuestion.Description;
-    newData.currentAnswer = resString;  
+    newData.currentAnswer = resString; 
+     turn++; 
     // Check if the game should end
     if (point == 5 || turn == 5)
     {
         endGame();
+        return; 
     }
     else if (point == 1)
     {
         // Handle the message for the current client
-        handlePlayMessage(client.clientModel.point, Type.Play, newData, client);
+        handlePlayMessage(client.clientModel.point, Type.Play, newData, curUser);
     }
-    else
+    else if(point == 0)
     {
         // Handle the message for the current client
         Debug.Log("Point: " + point);
-        handlePlayMessage(client.clientModel.point, Type.Wait, newData, client);
+       // handlePlayMessage(client.clientModel.point, Type.Wait, newData, client);
 
         // Find the index of the current client in the sorted users list
-        int index = sortedUsers.FindIndex(c => c == client);
+        int index = sortedUsers.FindIndex(c => c == curUser);
 
         // Determine the next user
       
@@ -326,7 +333,15 @@ string MaskAnswer(string answer, string input)
     }
 
     // Increment the turn counter
-    turn++;
+   
+
+    foreach(ClientHandler clientHandler in sortedUsers)
+    {
+        if(clientHandler != curUser)
+        {
+            handlePlayMessage(clientHandler.clientModel.point, Type.Wait, newData, clientHandler);
+        }
+    }
 }
 
     // Updated handlePlayMessage function to include the client parameter
@@ -355,5 +370,10 @@ string MaskAnswer(string answer, string input)
     {
         // them nut stop game
         serverControler.StopServer();
+    }
+
+    public void BoardcastForAllClients(string message)
+    {
+        serverControler.BroadcastToAllClients(message);
     }
 }
