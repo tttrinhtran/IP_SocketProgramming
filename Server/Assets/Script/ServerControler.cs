@@ -73,11 +73,11 @@ private void StartServer2()
             Thread clientThread = new Thread(new ThreadStart(clientHandler.HandleClient));
             clientThread.Start();
             clients.Add(clientHandler);
-
-            if( clients.Count>0)
-            {
-                GetConnectedClients();
-            }
+            
+            // if( clients.Count>0)
+            // {
+            //     GetConnectedClients();
+            // }
         }
     }
     
@@ -119,6 +119,18 @@ private void StartServer2()
         return connectedClients;
     }
 
+    public List<string> GetConnectedClientByID()
+    {
+        List<string> connectedClients = new List<string>();
+        foreach (ClientHandler client in clients)
+        {
+            connectedClients.Add(client.clientModel.getUserId());
+            // Debug.Log("Info"+client.GetClientInfo());
+            Debug.Log("Info: "+client.clientModel.getUserId());
+        }
+        return connectedClients;
+    }
+
    
 public void SendMessageToClient(ClientHandler clientHandler, Message message)
 {
@@ -127,6 +139,7 @@ public void SendMessageToClient(ClientHandler clientHandler, Message message)
         if (client == clientHandler)
         {
             client.SendJSON(message);
+            Debug.Log("Message sent to client: " + message);   
             return; 
         }
     }
@@ -202,7 +215,10 @@ public class ClientHandler
         {
             // Get client stream
             stream = client.GetStream();
-            
+
+
+            // Send the JSON object to the client
+            // SendJSON(messageToSend);
             while (isRunning)
             {
                 string message = ReadMessage();
@@ -323,6 +339,7 @@ public class ClientHandler
     {
         if (client != null && client.Client.RemoteEndPoint != null)
         {
+            Debug.Log("Check client info");
             return clientModel.UserId.ToString(); 
         }
         return "Unknown";
