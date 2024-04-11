@@ -15,6 +15,7 @@ public class playSceneController : MonoBehaviour
     public ClientController clientController;
     private float time = 10f; // Changed to float for smooth countdown
     private int userID;
+    private MessageType type = 0;
 
     // Start is called before the first frame update
     void Start()
@@ -28,7 +29,6 @@ public class playSceneController : MonoBehaviour
         // Add listener to the start button to send a message to the server
         SubmitButton.onClick.AddListener(SendMessage);
         // set userID from userID.txt
-        userID = int.Parse(System.IO.File.ReadAllText("userID.txt"));
     }
 
     void Update()
@@ -64,7 +64,7 @@ public class playSceneController : MonoBehaviour
     {
         string answer = InputField.text;
         Debug.Log("Answer: " + answer);
-        StartMessage answerMessage = new StartMessage(MessageType.Play, answer);
+        StartMessage answerMessage = new StartMessage(type, answer);
         string jsonString = JsonUtility.ToJson(answerMessage);
         clientController.SendMessageToServer(jsonString);
     }
@@ -75,6 +75,7 @@ public class playSceneController : MonoBehaviour
         Description.text=playMessage.data.hint;
         Keyword.text=playMessage.data.currentAnswer;
         Score.text="Score: "+playMessage.point.ToString();
+        type=playMessage.Type;
         if (playMessage.Type==MessageType.Play)
         {
             Notification.text="Your Turn";

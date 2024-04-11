@@ -36,5 +36,9 @@ public class StartSceneController : MonoBehaviour
       
         clientController.SendMessageToServer(jsonString);
     }
- 
+    public void Update()
+    {
+        
+    }
+
 }
