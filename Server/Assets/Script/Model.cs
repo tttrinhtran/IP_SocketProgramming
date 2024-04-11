@@ -13,15 +13,16 @@ public enum Type{
     Start,
     Lobby, 
     Play,
-    End,
-    Wait
+    Wait, 
+    End
+
 
 }
 [System.Serializable]
 public class Message
 {
     public int point; 
-    public Type type;
+    public Type Type;
     public Data data; 
 } 
 
@@ -38,6 +39,10 @@ public class ClientModel
     public ClientModel()
     {
        
+    }
+    public string getUserId()
+    {
+        return UserId;
     }
 
   

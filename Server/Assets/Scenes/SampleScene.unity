@@ -720,6 +720,7 @@ GameObject:
   - component: {fileID: 1364455547}
   - component: {fileID: 1364455550}
   - component: {fileID: 1364455549}
+  - component: {fileID: 1364455551}
   m_Layer: 0
   m_Name: Server
   m_TagString: Untagged
@@ -768,8 +769,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   startButton: {fileID: 1865352253}
   stopButton: {fileID: 1025383442}
-  ServerController: {fileID: 1364455547}
-  GameplayData: {fileID: 1364455550}
+  gameplayControler: {fileID: 0}
   clientMessageText: {fileID: 820378143}
 --- !u!114 &1364455550
 MonoBehaviour:
@@ -781,6 +781,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7faab7a7656602b4d841a0d9ba897f80, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &1364455551
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1364455546}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e24bdc7c137b7c946898c757c486465d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &1820961494

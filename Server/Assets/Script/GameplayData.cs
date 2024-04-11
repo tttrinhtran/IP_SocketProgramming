@@ -14,7 +14,7 @@ public class GameplayData : MonoBehaviour
   
     }
 
-    private void LoadGameplayDataFromFile()
+    public void LoadGameplayDataFromFile()
     {
         try
         {
