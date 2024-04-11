@@ -13,6 +13,7 @@ public class ClientController : MonoBehaviour
     private NetworkStream stream;
     private bool isConnected = false;
     public Canvas StartScene, PlayScene, EndScene, LobbyScene;
+    public bool isSentName = false;
     
 
     void Start()
@@ -117,9 +118,13 @@ public class ClientController : MonoBehaviour
                     HandleStartMessage(startMessage);
                     break;
                 case MessageType.Lobby:
-                    Debug.Log("Received Lobby message");
-                    StartMessage lobbyMessage = JsonConvert.DeserializeObject<StartMessage>(messageJson);
-                    HandleLobbyMessage(lobbyMessage);
+                    Debug.Log("isSentName: " + isSentName);
+                    if (isSentName)
+                    {
+                        Debug.Log("Received Lobby message");
+                        StartMessage lobbyMessage = JsonConvert.DeserializeObject<StartMessage>(messageJson);
+                        HandleLobbyMessage(lobbyMessage);
+                    }
                     break;
                 case MessageType.Wait:
                 case MessageType.Play:
@@ -157,14 +162,19 @@ public class ClientController : MonoBehaviour
     public void SendMessageToServer(string message)
     {
         try
-        {            
-
-            // Convert the JSON string to bytes
+        {
             byte[] buffer = System.Text.Encoding.UTF8.GetBytes(message);
 
             // Send the bytes to the server
             stream.Write(buffer, 0, buffer.Length);
             Debug.Log("Sent message to server: " + message);
+            StartMessage startMessage = JsonConvert.DeserializeObject<StartMessage>(message);
+            if (startMessage.Type==MessageType.Start)
+            {
+                isSentName = true;
+            }
+            // Convert the JSON string to bytes
+            
 
         }
         catch (Exception ex)

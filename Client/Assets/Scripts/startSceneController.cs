@@ -34,6 +34,7 @@ public class StartSceneController : MonoBehaviour
         string jsonString=JsonUtility.ToJson(startMessage);
         // Send the message to the server
       
+        clientController.isSentName = true;
         clientController.SendMessageToServer(jsonString);
     }
     public void Update()
