@@ -71,10 +71,11 @@ public class playSceneController : MonoBehaviour
 
     public void updateUI(PlayMessage playMessage)
     {
+        Debug.Log("Updating UI with PlayMessage");
         Description.text=playMessage.data.hint;
         Keyword.text=playMessage.data.currentAnswer;
         Score.text="Score: "+playMessage.point.ToString();
-        if (playMessage.type==MessageType.Play)
+        if (playMessage.Type==MessageType.Play)
         {
             Notification.text="Your Turn";
             SubmitButton.interactable=true;

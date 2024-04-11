@@ -5,7 +5,8 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using UnityEngine.UI;
-
+using System.Collections.Generic;
+using Newtonsoft.Json;
 public class ClientController : MonoBehaviour
 {
     private TcpClient client;
@@ -32,7 +33,7 @@ public class ClientController : MonoBehaviour
         try
         {
             client = new TcpClient();
-            client.Connect("127.0.0.1", 8888); // Connect to localhost (127.0.0.1) on port 8888
+            client.Connect("192.168.1.14", 8888); // Connect to localhost (127.0.0.1) on port 8888
             stream = client.GetStream();
             isConnected = true;
             Debug.Log("Connected to server.");
@@ -85,38 +86,53 @@ public class ClientController : MonoBehaviour
 
     private void ProcessReceivedMessage(string messageJson)
     {
+
         try
         {
-            // Deserialize JSON data into appropriate message class based on its type
-            if (messageJson.Contains("Start"))
+            Debug.Log("Processing received message: " + messageJson);
+
+            // Deserialize JSON message into a dictionary
+            Dictionary<string, object> jsonDict = JsonConvert.DeserializeObject<Dictionary<string, object>>(messageJson);
+            // Log deserialized dictionary contents
+            Debug.Log("Received dictionary with " + jsonDict.Count + " key-value pairs:");
+            MessageType messageType = 0;
+            foreach (var kvp in jsonDict)
             {
-                StartMessage startMessage = JsonUtility.FromJson<StartMessage>(messageJson);
-                HandleStartMessage(startMessage);
+                Debug.Log("Key: " + kvp.Key + ", Value: " + kvp.Value);
+                if (kvp.Key == "Type")
+                {
+                    Debug.Log("Message type: " + kvp.Value);
+                    messageType = (MessageType)Enum.Parse(typeof(MessageType), kvp.Value.ToString());
+
+                }
             }
-            else if (messageJson.Contains("Play") || messageJson.Contains("Wait"))
+            switch (messageType)
             {
-                PlayMessage playMessage = JsonUtility.FromJson<PlayMessage>(messageJson);
-                HandlePlayMessage(playMessage);
-            }
-            else if (messageJson.Contains("End"))
-            {
-               // EndMessage endMessage = JsonUtility.FromJson<EndMessage>(messageJson);
-                // HandleEndMessage(endMessage);
-            }
-            else if (messageJson.Contains("Lobby"))
-            {
-                //LobbyMessage lobbyMessage = JsonUtility.FromJson<LobbyMessage>(messageJson);
-                // HandleLobbyMessage(lobbyMessage);
-            }
-            else
-            {
-                Debug.LogWarning("Received unrecognized message: " + messageJson);
+                case MessageType.Hello:
+                    Debug.Log("Received Hello message");
+                    break;
+                case MessageType.Start:
+                    Debug.Log("Received Start message");
+                    StartMessage startMessage = JsonConvert.DeserializeObject<StartMessage>(messageJson);
+                    HandleStartMessage(startMessage);
+                    break;
+                case MessageType.Play:
+                    Debug.Log("Received Play message");
+                    PlayMessage playMessage = JsonConvert.DeserializeObject<PlayMessage>(messageJson);
+                    HandlePlayMessage(playMessage);
+                    break;
+                // Add cases for other message types
+                default:
+                    Debug.LogWarning("Received unrecognized message type: " + messageType);
+                    break;
             }
         }
+
         catch (Exception ex)
         {
-            Debug.LogError("Error processing received message: " + ex.Message);
+            Debug.LogError("Error deserializing JSON: " + ex.Message);
         }
+
     }
 
 
@@ -169,9 +185,8 @@ public class ClientController : MonoBehaviour
         PlayScene.gameObject.SetActive(true);
         EndScene.gameObject.SetActive(false);
         LobbyScene.gameObject.SetActive(false);
-        
-        playSceneController playSceneController = PlayScene.GetComponent<playSceneController>();
-        playSceneController.updateUI(playMessage);
+        Debug.Log("okay");
+        PlayScene.GetComponent<playSceneController>().updateUI(playMessage);
 
     }
 

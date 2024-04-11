@@ -28,7 +28,7 @@ public class StartMessage
 [Serializable]
 public class PlayMessage
 {
-    public MessageType type;
+    public MessageType Type;
     public int point;
     public Data data;
 }
@@ -39,4 +39,5 @@ public class Data
     public string hint;
     public string currentAnswer;
 }
+
 
