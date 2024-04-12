@@ -74,11 +74,13 @@ public class GameplayControler : MonoBehaviour
         }
         Debug.Log("Sort user size: " + sortedUsers.Count); 
         curUser = sortedUsers[0];
+        turn = 0;
         foreach(ClientHandler client in sortedUsers)
         {
             Data data = new Data();
             data.hint = gameplayQuestion.Description;
             int tmp = gameplayQuestion.Keyword.Length; 
+            client.clientModel.point = 0;
             for(int i = 0; i < tmp; i++)
             {
                 data.currentAnswer += "_";

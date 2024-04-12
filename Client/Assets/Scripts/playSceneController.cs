@@ -42,6 +42,7 @@ public class playSceneController : MonoBehaviour
         {
             // Time's up, handle accordingly
             // For example:
+            UpdateTimeText();
             TimeIsUp();
         }
     }
@@ -92,7 +93,8 @@ public class playSceneController : MonoBehaviour
         else
         {
             Notification.text="Opponent's Turn";
-            SubmitButton.interactable = false;
+            SubmitButton.interactable = false; time = 0;
+            
         }
     }
 }
