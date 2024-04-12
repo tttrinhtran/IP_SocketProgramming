@@ -2,8 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
-using Unity.VisualScripting;
-using UnityEditor.MPE;
 using System;
 
 public class GameplayControler : MonoBehaviour
@@ -100,6 +98,7 @@ public class GameplayControler : MonoBehaviour
     public void StopGame()
     {
        serverControler.StopServer();
+       Application.Quit();
     }
    void lobby()
    {
