@@ -18,6 +18,7 @@ public class ClientController : MonoBehaviour
 
     void Start()
     {
+        StartScene.gameObject.SetActive(true);
         PlayScene.gameObject.SetActive(false);
         EndScene.gameObject.SetActive(false);
         LobbyScene.gameObject.SetActive(false);
@@ -34,7 +35,7 @@ public class ClientController : MonoBehaviour
         try
         {
             client = new TcpClient();
-            client.Connect("127.0.0.1", 8888); // Connect to localhost (127.0.0.1) on port 8888
+            client.Connect("192.168.1.39", 8888); // Connect to localhost (127.0.0.1) on port 8888
             stream = client.GetStream();
             isConnected = true;
             Debug.Log("Connected to server.");
@@ -132,6 +133,11 @@ public class ClientController : MonoBehaviour
                     PlayMessage playMessage = JsonConvert.DeserializeObject<PlayMessage>(messageJson);
                     HandlePlayMessage(playMessage);
                     break;
+                case MessageType.End:
+                    Debug.Log("Received End message");
+                    StartMessage endMessage = JsonConvert.DeserializeObject<StartMessage>(messageJson);
+                    HandleEndMessage(endMessage);
+                    break;
                 // Add cases for other message types
                 default:
                     Debug.LogWarning("Received unrecognized message type: " + messageType);
@@ -214,5 +220,13 @@ public class ClientController : MonoBehaviour
         Debug.Log("Received Lobby message. Text: " + startMessage.Text);
         LobbyScene.GetComponent<lobbySceneController>().updateUI(startMessage.Text);
     }
-
+    private void HandleEndMessage(StartMessage endMessage)
+    {
+        StartScene.gameObject.SetActive(false);
+        PlayScene.gameObject.SetActive(false);
+        EndScene.gameObject.SetActive(true);
+        LobbyScene.gameObject.SetActive(false);
+        Debug.Log("Received End message. Text: " + endMessage.Text);
+        EndScene.GetComponent<endSceneController>().updateUI(endMessage.Text);
+    }
 }

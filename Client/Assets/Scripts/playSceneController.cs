@@ -13,7 +13,7 @@ public class playSceneController : MonoBehaviour
     public TMPro.TMP_InputField InputField;
     public Button SubmitButton;
     public ClientController clientController;
-    private float time = 60f; // Changed to float for smooth countdown
+    private float time = 20f; // Changed to float for smooth countdown
     public MessageType type;
 
     // Start is called before the first frame update
@@ -74,7 +74,11 @@ public class playSceneController : MonoBehaviour
     {
         Debug.Log("Updating UI with PlayMessage");
         Description.text=playMessage.data.hint;
-        Keyword.text=playMessage.data.currentAnswer;
+        string text = playMessage.data.currentAnswer;
+        char[] characters = text.ToCharArray();
+        // Join the characters with spaces in between
+        string spacedText = string.Join(" ", characters);
+        Keyword.text=spacedText;
         Score.text="Score: "+playMessage.point.ToString();
         type=playMessage.Type;
         Debug.Log("Type: "+type + "MessageType: " + MessageType.Play);
