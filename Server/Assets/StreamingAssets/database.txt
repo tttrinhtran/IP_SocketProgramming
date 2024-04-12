@@ -1,9 +1,9 @@
 4
-Hello
+HELLO
 A general greeting sentence
-Python
+PYTHON
 A programing language
-Candy
+CANDY
 A sweet treat
 UCLA
 Mr.Nam's university

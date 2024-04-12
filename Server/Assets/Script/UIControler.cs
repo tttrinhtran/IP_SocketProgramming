@@ -9,6 +9,7 @@ public class UIController : MonoBehaviour
 {
     public Button startButton;
     public Button stopButton;
+    public Button lobbyButton;
     public GameplayControler gameplayControler;
  
     public TMP_Text clientMessageText;

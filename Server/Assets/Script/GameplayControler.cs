@@ -85,7 +85,7 @@ public class GameplayControler : MonoBehaviour
             {
                 data.currentAnswer += "_";
             }
-            curString = data.currentAnswer; 
+            curString = data.currentAnswer.ToUpper(); 
             if(client == curUser)
             {
                 handlePlayMessage(0, Type.Play, data, client);
@@ -201,8 +201,6 @@ public class GameplayControler : MonoBehaviour
 
     public void startGame()
     {
-        
-        
         uiControler.startButton.onClick.AddListener(innitGame);
     }
 
@@ -218,6 +216,7 @@ public class GameplayControler : MonoBehaviour
     Tuple<int, string> checkAnswer(string input, string answer)
 {
     int point = 0;
+    input = input.ToUpper();
     // string maskedString = "";
 
     if (input.Length > 1)
@@ -248,7 +247,7 @@ public class GameplayControler : MonoBehaviour
         {
             // If the input is contained in the answer but is not equal to the answer, return 1 point and the masked answer
             point = 1;
-            curString = MaskAnswer(answer, input);
+            curString = MaskAnswer(answer.ToUpper(), input.ToUpper());
         }
         else
         {
@@ -265,8 +264,8 @@ public class GameplayControler : MonoBehaviour
 string MaskAnswer(string answer, string input)
 {
     // Convert the answer and current string to char arrays for easier manipulation
-    char[] answerChars = answer.ToCharArray();
-    char[] curStringChars = curString.ToCharArray();
+    char[] answerChars = answer.ToUpper().ToCharArray();
+    char[] curStringChars = curString.ToUpper().ToCharArray();
 
     // Iterate through each character in the answer
     for (int i = 0; i < answerChars.Length; i++)
@@ -359,21 +358,31 @@ string MaskAnswer(string answer, string input)
 
     void endGame()
     {
-
+        sortedUsers = sortedUsers.OrderByDescending(client => client.clientModel.point).ToList(); 
         MessageClient messageClient = new MessageClient(); 
         messageClient.Type = Type.End;
-        messageClient.Text = "Game Over";
+        foreach(ClientHandler client in sortedUsers)
+        {
+            messageClient.Text += client.clientModel.UserId + ": " + client.clientModel.point + "\n";
+        }
         serverControler.BroadcastToAllClients(JsonUtility.ToJson(messageClient));
+
+        uiControler.lobbyButton.onClick.AddListener(UpdateLobby);
     }
+
+    // public void backToLobby()
+    // {
+    //    MessageClient messageClient = new MessageClient();
+    //    messageClient.Type = Type.Lobby;
+    //    messageClient.Text = "Back to lobby";
+    //    serverControler.BroadcastToAllClients(JsonUtility.ToJson(messageClient));
+    // }
+
+    
 
     void closeProgram()
     {
         // them nut stop game
         serverControler.StopServer();
-    }
-
-    public void BoardcastForAllClients(string message)
-    {
-        serverControler.BroadcastToAllClients(message);
     }
 }
