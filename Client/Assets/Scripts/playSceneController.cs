@@ -13,7 +13,7 @@ public class playSceneController : MonoBehaviour
     public TMPro.TMP_InputField InputField;
     public Button SubmitButton;
     public ClientController clientController;
-    private float time = 20f; // Changed to float for smooth countdown
+    private float time = 10f; // Changed to float for smooth countdown
     public MessageType type;
 
     // Start is called before the first frame update
@@ -87,7 +87,7 @@ public class playSceneController : MonoBehaviour
         {
             Notification.text="Your Turn";
             SubmitButton.interactable=true;
-            Debug.Log("play bitch");            time = 60;
+            Debug.Log("play bitch");            time = 10;
         }
         else
         {
